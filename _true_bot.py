@@ -1,6 +1,7 @@
 # подключаем модуль для Телеграма
 import telebot
 
+import uuid
 import subprocess
 
 # указываем токен для доступа к боту
@@ -16,20 +17,25 @@ def start(message):
     # выводим приветственное сообщение
     bot.send_message(message.from_user.id, start_txt, parse_mode='Markdown')
 
-# КОМАНДА: /file
-@bot.message_handler(commands=['file'], content_types=['text'])
+# КОМАНДА: /connect
+@bot.message_handler(commands=['connect'], content_types=['text'])
 def send_file(message):
-    bot.send_document(message.chat.id, open(r"Пример файла.txt", 'rb'))
-
-# КОМАНДА: /newclient
-@bot.message_handler(commands=['newclient'])
-def create_new_client(message):
     try:
-        subprocess.run(["sh", "/root/dev/ovpn_serv/new_client.sh"])
+        # 0.генерируем id клиента
+        client_id = str(uuid.uuid4())
+
+        # 1.регистрируем клиента
+        subprocess.run(["sh", "/root/dev/ovpn_serv/reg_client.sh", client_id])
+        
+        # 2.создаём файл конфигурации клиента
+        subprocess.run(["sh", "/root/dev/ovpn_serv/new_client.sh", client_id])
         bot.send_message(chat_id=message.from_user.id, text="Новый клиент создан!")
-    except:
-        bot.send_message(chat_id=message.from_user.id, text="Нового клиента создать не удалось :(")
-    # ДОБАВИТЬ: Проверять наличие нового файла .ovpn
+    
+        # 3.высылаем файл
+        bot.send_document(message.chat.id, open(rf"/root/{client_id}.ovpn", 'rb'))
+    except Exception as e:
+        bot.send_message(chat_id=message.from_user.id, text=f"Нового клиента создать не удалось :(.\n{e}")
+
 
 # запускаем бота
 if __name__ == '__main__':
@@ -38,4 +44,4 @@ if __name__ == '__main__':
         bot.polling(none_stop=True, interval=0)
     # если возникла ошибка — сообщаем про исключение и продолжаем работу
     except Exception as e: 
-        print('❌❌❌❌❌ Сработало исключение! ❌❌❌❌❌')
+        print(f'❌❌❌❌❌ Сработало исключение! ❌❌❌❌❌.')
