@@ -6,24 +6,19 @@ columns_number="$(echo $fileline | awk -F' ' '{print NF;}')"
 
 if [[ $columns_number -eq 5 ]] && [[ $fileline == V* ]]; then
 
-    # source /etc/openvpn/server/easy-rsa/pki/vars
-    cd /etc/openvpn/server/easy-rsa/
-	/etc/openvpn/server/easy-rsa/easyrsa revoke $1
-
-    {
-        sleep 3
-        echo kill $1
-        sleep 3
-        echo exit
-    } | telnet localhost 7505
-
-    echo "Client certificate revoked successfully."
+	serial="$(echo $fileline | awk -F' ' '{print $3;}')"
+    # echo "Client is active. Serial:" 
+	echo $serial
+	
     exit 0;
 
 elif [[ $columns_number -eq 6 ]] && [[ $fileline == R* ]]; then
 
-    echo "Client certificate is already revoked."
-    exit 0;
+	serial="$(echo $fileline | awk -F' ' '{print $4;}')"
+    # echo "Client is revoked. Serial:"
+	echo $serial
+    
+	exit 0;
 
 else
 
