@@ -8,7 +8,7 @@ if [[ $columns_number -eq 5 ]] && [[ $fileline == V* ]]; then
 
     # source /etc/openvpn/server/easy-rsa/pki/vars
     cd /etc/openvpn/server/easy-rsa/
-	/etc/openvpn/server/easy-rsa/easyrsa revoke $1
+	./easyrsa revoke $1
 
     {
         sleep 3
@@ -16,6 +16,10 @@ if [[ $columns_number -eq 5 ]] && [[ $fileline == V* ]]; then
         sleep 3
         echo exit
     } | telnet localhost 7505
+
+	./easyrsa gen-crl
+	systemctl restart openvpn-server@server.service 
+	#ДОБАВИТЬ: Отложенный рестарт сервиса. По подтверждению через админку
 
     echo "Client certificate revoked successfully."
     exit 0;
