@@ -1,8 +1,11 @@
 # подключаем модуль для Телеграма
 import telebot
+from telebot import types
 
 import uuid
 import subprocess
+
+from core import queries
 
 # указываем токен для доступа к боту
 bot = telebot.TeleBot('6180127098:AAHn1CEOf4LKlvx3K36lyLJT2vfD2iGAFN0')
@@ -43,13 +46,11 @@ def renew_client(client_id):
 
 # ВНУТРЕННИЕ МЕТОДЫ БОТА:
 # Отправить сертификат клиента
-@bot.message_handler(commands=['connect'], content_types=['text'])
-def send_cert(message, client_id):
+def send_cert(bot, message, client_id):
     try:
         # 3.высылаем файл
         bot.send_message(chat_id=message.from_user.id, 
-                        text="""Новый сертификат создан!
-                                Осталось только добавить его в приложение""")
+                        text="""Новый сертификат создан!\nОсталось только добавить его в приложение""")
         bot.send_document(message.chat.id, open(rf"/root/{client_id}.ovpn", 'rb'))
     except Exception as e:
         bot.send_message(chat_id=message.from_user.id, text=f"Нового клиента создать не удалось :(.\n{e}")
@@ -62,7 +63,6 @@ def start(message):
     # выводим приветственное сообщение
     bot.send_message(message.from_user.id, start_txt, parse_mode='Markdown')
 
-# ДЕЙСТВИЯ БОТА:
 # КОМАНДА: /register
 @bot.message_handler(commands=['register'])
 def new_user(message):
@@ -72,10 +72,14 @@ def new_user(message):
         client_id = str(uuid.uuid4())
 
         reg_client(client_id)
+        queries.add_client(client_id)
+
         new_client(client_id)
-        send_cert(message, client_id)
+        send_cert(bot, message, client_id)
+        print(f"INFO: Нового клиент создан: {client_id}")
     except Exception as e:
         bot.send_message(chat_id=message.from_user.id, text=f"Нового клиента создать не удалось :(.\n{e}")
+        print(f"FATAL: Нового клиента создать не удалось :(.\n{e}")
 
 # БЛОКИРОВКА ПОЛЬЗОВАТЕЛЯ:
 
@@ -88,4 +92,4 @@ if __name__ == '__main__':
         bot.polling(none_stop=True, interval=0)
     # если возникла ошибка — сообщаем про исключение и продолжаем работу
     except Exception as e: 
-        print(f'❌❌❌❌❌ Сработало исключение! ❌❌❌❌❌.')
+        print(f'❌❌❌❌❌ Сработало исключение! ❌❌❌❌❌.\n{e}')
