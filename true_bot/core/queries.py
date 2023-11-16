@@ -39,3 +39,16 @@ def get_client(client_id):
     except Exception as e:
         print(f"The error '{e}' occurred")
     
+def get_client_sub(chat_id):
+    conn = db.create_conn(DB_NAME, DB_USER, DB_PASS, DB_ADDR, DB_PORT)
+    
+    cursor = conn.cursor()
+    clients = None
+    try:
+        cursor.execute(f"""select sub_status from client where chat_id = {chat_id}""")
+        client_sub = cursor.fetchone()
+
+        return client_sub
+    except Exception as e:
+        print(f"The error '{e}' occurred")
+    

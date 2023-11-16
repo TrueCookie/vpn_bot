@@ -1,1 +1,3 @@
 *.gitignore
+*.out
+true_bot/truebot-env

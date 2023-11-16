@@ -12,6 +12,7 @@ bot = telebot.TeleBot('6180127098:AAHn1CEOf4LKlvx3K36lyLJT2vfD2iGAFN0')
 
 # приветственный текст
 start_txt = 'Привет! Это журнал «Код». \n\nТеперь у бота появился бэкенд.'
+MSG_ALREADY_ACTIVE_SUB = 'Вы уже оформили подписку. \nЧтобы отключить подписку в меню нажмите "Отключить подписку"'
 
 # ВЫЗОВ СКРИПТОВ BASH:
 def reg_client(client_id):
@@ -63,10 +64,17 @@ def start(message):
     # выводим приветственное сообщение
     bot.send_message(message.from_user.id, start_txt, parse_mode='Markdown')
 
-# КОМАНДА: /register
+# /register
 @bot.message_handler(commands=['register'])
-def new_user(message):
+def start_subscription(message):
     try:
+        chat_id = message.from_user.id
+        # Если пользователь уже имеет активную подписку, предупреждаем его
+        client_sub_active = queries.get_client_sub(chat_id)
+        if client_sub_active[0] == 'ACTIVE':
+            bot.send_message(chat_id, MSG_ALREADY_ACTIVE_SUB, parse_mode='Markdown')
+            return
+        
         # TODO: Заменить на читаемое имя (client_N)
         # 0.генерируем id клиента
         client_id = str(uuid.uuid4())
@@ -76,10 +84,15 @@ def new_user(message):
 
         new_client(client_id)
         send_cert(bot, message, client_id)
-        print(f"INFO: Нового клиент создан: {client_id}")
+        print(f"INFO: Новый клиент создан: {client_id}")
     except Exception as e:
         bot.send_message(chat_id=message.from_user.id, text=f"Нового клиента создать не удалось :(.\n{e}")
         print(f"FATAL: Нового клиента создать не удалось :(.\n{e}")
+
+# /trial
+@bot.message_handler(commands=['trial'])
+def start_trial(message):
+    pass
 
 # БЛОКИРОВКА ПОЛЬЗОВАТЕЛЯ:
 
